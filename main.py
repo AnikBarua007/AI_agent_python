@@ -1,3 +1,4 @@
+import argparse
 import os
 from dotenv import load_dotenv
 from google import genai
@@ -26,13 +27,18 @@ def main():
 # - models/gemini-2.5-flash-native-audio-latest
 # - models/gemini-2.5-flash-native-audio-preview-09-2025
 # - models/gemini-2.5-flash-native-audio-preview-12-2025
+    parser = argparse.ArgumentParser(description="Chatbot")
+    parser.add_argument("user_prompt", type=str, help="User prompt")
+    args = parser.parse_args()
+    # Now we can access `args.user_prompt`
     response = client.models.generate_content(
         model="gemini-3-flash-preview",
-        contents="Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.",
+        contents=args.user_prompt,
     )
+   
+    print(f"Prompt token: {response.usage_metadata.total_token_count}")
+    print(f"Request token: {response.usage_metadata.candidates_token_count}")
+    print("Response:")
     print(response.text)
-    print(response.usage_metadata.total_token_count)
-    print(response.usage_metadata.candidates_token_count)
-
 if __name__ == "__main__":
     main()
