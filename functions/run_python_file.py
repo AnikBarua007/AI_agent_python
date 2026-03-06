@@ -8,7 +8,7 @@ schema_run_python_file = types.FunctionDeclaration(
     parameters=types.Schema(
         type=types.Type.OBJECT,
         properties={
-            "filepath": types.Schema(
+            "file_path": types.Schema(
                 type=types.Type.STRING,
                 description="Path to the Python file to execute, relative to the working directory",
             ),
@@ -18,6 +18,7 @@ schema_run_python_file = types.FunctionDeclaration(
                 description="Optional list of command-line arguments to pass to the Python file",
             )
         },
+        required=["file_path"],
     ),
 )
 def run_python_file(working_directory, file_path, args=None):

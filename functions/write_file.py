@@ -15,6 +15,7 @@ schema_write_file = types.FunctionDeclaration(
                 description="Content to write to the file",
             ),
         },
+        required=["file_path", "content"],
     ),
 )
 def write_file(working_directory, file_path, content):
