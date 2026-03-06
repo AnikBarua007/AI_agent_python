@@ -2,7 +2,7 @@ import argparse
 import os
 from dotenv import load_dotenv
 from google import genai
-
+from prompts import  system_prompt
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 if api_key is None:
@@ -35,8 +35,10 @@ def main():
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=messages,
+        config=types.GenerateContentConfig(system_instruction=system_prompt,
+                                           temperature=0)
+
     )
-   
     print(f"Prompt token: {response.usage_metadata.total_token_count}")
     print(f"Request token: {response.usage_metadata.candidates_token_count}")
     print("Response:")
