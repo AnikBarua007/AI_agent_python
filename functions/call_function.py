@@ -35,7 +35,8 @@ def call_function(function_call, verbose=False):
             response={"error": f"Unknown function: {function_name}"},
                 )],
             )
-    args.working_directory = "./calculator"
+
+    args["working_directory"] = "./calculator"
     function_result = function_map[function_name](**args)
     return types.Content(
     role="tool",
