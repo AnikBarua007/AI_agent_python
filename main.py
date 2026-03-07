@@ -1,3 +1,4 @@
+import sys
 import argparse
 import os
 from dotenv import load_dotenv
@@ -35,38 +36,58 @@ def main():
 
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
     # Now we can access `args.user_prompt`
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-lite",
-        contents=messages,
-        config=types.GenerateContentConfig( tools=[available_functions],system_instruction=system_prompt,
-                                           temperature=0)
+    max_iterations = 20
+    for _ in range(max_iterations):
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions],
+                system_instruction=system_prompt,
+                temperature=0,
+            ),
+        )
 
-    )
-    
-    print(f"Prompt token: {response.usage_metadata.total_token_count}")
-    print(f"Request token: {response.usage_metadata.candidates_token_count}")
-    print("Response:")
-    function_results = []
-    function_calls =response.function_calls
-    if function_calls!=None:
-        for function_call in function_calls:
-            function_call_result = call_function(function_call, verbose=args.verbose)
-            # print(function_call_result)
-            list_parts=function_call_result.parts
-            if list_parts==None:
-                raise Exception(f"Unexpected function call result format: {function_call_result}")
-            if list_parts[0].function_response == None:
-                raise Exception(f"Unexpected function call result format: {function_call_result}")
-            function_results.append(list_parts[0])
-            response_call = list_parts[0].function_response.response
-            if response_call==None:
-                raise Exception(f"Unexpected function call result format: {function_call_result}")
-            # print(f"Function call result for {function_call.name}: {response_call}")
-            if args.verbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-            
-    
-    else :
+        candidates = response.candidates
+        if candidates:
+            for candidate in candidates:
+                if candidate.content is not None:
+                    messages.append(candidate.content)
+
+        print(f"Prompt token: {response.usage_metadata.total_token_count}")
+        print(f"Request token: {response.usage_metadata.candidates_token_count}")
+        print("Response:")
+
+        function_results = []
+        function_calls = response.function_calls
+        if not function_calls:
+            print(response.text)
+            return 
+        if function_calls is not None:
+            for function_call in function_calls:
+                function_call_result = call_function(function_call, verbose=args.verbose)
+                list_parts = function_call_result.parts
+                if list_parts is None:
+                    raise Exception(f"Unexpected function call result format: {function_call_result}")
+                if list_parts[0].function_response is None:
+                    raise Exception(f"Unexpected function call result format: {function_call_result}")
+
+                function_results.append(list_parts[0])
+                response_call = list_parts[0].function_response.response
+                if response_call is None:
+                    raise Exception(f"Unexpected function call result format: {function_call_result}")
+
+                if args.verbose:
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+
+            messages.append(types.Content(role="user", parts=function_results))
+            continue
         print(response.text)
+        break
+    print(
+        f"Error: Reached maximum iterations ({max_iterations}) without a final model response.",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 if __name__ == "__main__":
     main()
